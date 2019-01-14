@@ -10,6 +10,11 @@
 .reveal h6 {
   text-transform: none;
 }
+
+.reveal h3 {
+  font-size: 1.40em !important;
+}
+
 .reveal section img {
   border: none;
 }
@@ -17,4 +22,8 @@
 .reveal section h2 img {
   height: 1.5em !important;
   vertical-align: bottom !important;
+}
+
+.reveal section {
+  line-height: 1.0 !important;
 }

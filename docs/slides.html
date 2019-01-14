@@ -1,11 +1,11 @@
 <section>
 
-<h1>Orbsの話（仮）</h1>
+<h1>Orbsベストプラクティス</h1>
 <p>sue445</p>
 
 <p>2019/01/30 <a href="https://circleci.connpass.com/event/115193/">第1回CircleCI ユーザーコミュニティイベント</a></p>
 
-<p><a href="https://github.com/sue445/circleci-user-community-event-01">https://github.com/sue445/circleci-user-community-event-01</a></p>
+<p><a href="https://sue445.github.io/circleci-user-community-event-01/">https://sue445.github.io/circleci-user-community-event-01/</a></p>
 
 </section>
 <section>
@@ -14,7 +14,366 @@
 </h2>
 
 <ul>
-  <li><a href="https://twitter.com/sue445">@sue445</a></li>
+  <li>Go Sueyoshi a.k.a <a href="https://twitter.com/sue445">@sue445</a>
+</li>
+  <li>ピクシブ所属</li>
+  <li>自称CIマニアでCircleCI, Wercker, Travis CI, GitLab CI, Jenkins辺りは3〜4年くらい利用してる
+    <ul>
+      <li>c.f. <a href="https://sue445.hatenablog.com/entry/2018/12/07/114638">CIマニアから見た各種CIツールの使い所 - くりにっき</a>
+</li>
+    </ul>
+  </li>
+</ul>
+
+</section>
+<section>
+
+<h3>「このOrbの作者」です</h3>
+<p><a href="https://codezine.jp/article/detail/11306?p=4">https://codezine.jp/article/detail/11306?p=4</a></p>
+
+<p><img src="images/orbs.png" alt="orbs"></p>
+
+</section>
+<section>
+
+<h2>今日話すこと</h2>
+<ul>
+  <li>Orbsについて</li>
+  <li>自作Orbsの紹介</li>
+  <li>Orbsのテストについて</li>
+  <li>Orbsを作る時の勘所</li>
+</ul>
+
+</section>
+<section>
+
+<h2>最初にまとめ</h2>
+<ul>
+  <li>Orbsを活用することでリポジトリをまたいだ <code>.circleci/config.yml</code> のリファクタリングと処理の共通化が可能になる</li>
+  <li>Orbsのテストは難しい</li>
+</ul>
+
+</section>
+<section>
+
+<h2>Orbsとは</h2>
+<ul>
+  <li>
+<code>.circleci/config.yml</code> をモジュール化する仕組み
+    <ul>
+      <li>複数リポジトリで共通する処理を1箇所に集約できる</li>
+      <li>自分が作ったorbを配布もできる</li>
+    </ul>
+  </li>
+  <li>WerckerやGitLab CIにも似たような仕組はある</li>
+</ul>
+
+</section>
+<section>
+
+<h2>CircleCI + Rubyあるある</h2>
+<ul>
+  <li>「CircleCIのキャッシュを活かしつつ <code>bundle install</code> するstep」を書いている</li>
+  <li>Ruby以外でもこういうのはよくあることだと思う</li>
+</ul>
+
+<pre><code class="language-.circleci/config.yml">jobs:
+  rspec:
+    docker:
+      - image: circleci/ruby
+
+    steps:
+      - checkout
+
+      # 毎回フルでbundle installするとビルドが遅くなるのでキャッシュがあればとってくる
+      - restore_cache:
+          keys:
+            - v1-bundle-{{ checksum "Gemfile.lock" }}
+            - v1-bundle
+      - run:
+          name: bundle install
+          command: |
+            bundle install --jobs=4 --retry=3 --path vendor/bundle
+
+            # 古いgemが残ってるとキャッシュが肥大化してビルドが遅くなるので消す
+            bundle clean
+
+            # Gemfile.lockに書かれてるbundlerのバージョンとCIのdockerイメージに入ってる
+            # bundlerのバージョンに差異があるとGemfile.lockが更新されてchecksumが一致しなくなるので元に戻す
+            gem install restore_bundled_with --no-document
+            restore-bundled-with
+      - save_cache:
+          key: v1-bundle-{{ checksum "Gemfile.lock" }}
+          paths:
+            - ~/app/vendor/bundle
+      # ↑↑↑↑↑↑ここから上は毎回同じ↑↑↑↑↑
+
+      - run: bundle exec rake test
+</code></pre>
+
+</section>
+<section>
+
+<h3>つらみ</h3>
+<ul>
+  <li>さっきのはrspecだけだけど、rspecとrubocopを並列実行したい時は同じようなのが必要
+    <ul>
+      <li>Rubyでアプリを作っていると <code>bundle install</code> の利用頻度は多い</li>
+    </ul>
+  </li>
+  <li>yamlのkeyで抽出してmergeすれば多少DRYにはなるが、リポジトリをまたがると無理なので同じのを何箇所も書く必要がある</li>
+  <li>CircleCIだけで個人アプリ10個もメンテしてると全部にコピペが大量発生</li>
+  <li>個人アプリならそれなりに一貫性はあるのだが、社内リポジトリを見るとだいたいみんな同じことやってるんだけどアプリによって微妙に記述が違う
+    <ul>
+      <li>参考にしたくてもデファクトがないのでどれを信用していいのか分からない</li>
+    </ul>
+  </li>
+</ul>
+
+</section>
+<section>
+
+<h2>作ったもの：sue445/ruby-orbs</h2>
+<ul>
+  <li><a href="https://circleci.com/orbs/registry/orb/sue445/ruby-orbs">https://circleci.com/orbs/registry/orb/sue445/ruby-orbs</a></li>
+  <li><a href="https://github.com/sue445/circleci-ruby-orbs">https://github.com/sue445/circleci-ruby-orbs</a></li>
+  <li>Orbsが正式リリースされる1週間前くらいから作ってたんだけど、急にOrbsが正式リリースされたので急いで作りきった</li>
+</ul>
+
+</section>
+<section>
+
+<h3>ruby-orbs/bundle-install</h3>
+<ul>
+  <li>さっきのくっそ長い処理が全部 <code>ruby-orbs/bundle-install</code> に集約されている</li>
+  <li>16行 -&gt; 1行</li>
+</ul>
+
+<pre><code class="language-.circleci/config.yml">jobs:
+  rspec:
+    docker:
+      - image: circleci/ruby
+
+    steps:
+      - checkout
+      - ruby-orbs/bundle-install
+      - run: bundle exec rspec
+</code></pre>
+
+</section>
+<section>
+
+<h3>ruby-orbs/bundle-update-pr</h3>
+<ul>
+  <li><a href="https://github.com/masutaka/circleci-bundle-update-pr">https://github.com/masutaka/circleci-bundle-update-pr</a> （CircleCIで自動bundle updateしてPRを作るgem）をorb化したもの</li>
+  <li>スニペット（gemを使うためのお膳立て）が結構長くてコピペして回るのがつらい量なので、可能な限り隠蔽したかった</li>
+</ul>
+
+</section>
+<section>
+
+<h4>Before</h4>
+<p><a href="https://github.com/masutaka/circleci-bundle-update-pr/blob/v1.14.1/README.md#configure-circleyml">https://github.com/masutaka/circleci-bundle-update-pr/blob/v1.14.1/README.md#configure-circleyml</a></p>
+
+<pre><code class="language-.circleci/config.yml">version: 2
+jobs:
+  build:
+    # snip
+  continuous_bundle_update:
+    docker:
+      - image: ruby:2.4.2-alpine
+    working_directory: /work
+    steps:
+      - run:
+          name: Install System Dependencies
+          command: |
+            # See also https://circleci.com/docs/2.0/custom-images/#adding-required-and-custom-tools-or-files
+            apk add --update --no-cache git openssh-client tar gzip ca-certificates \
+              tzdata
+            gem install -N bundler
+      - run:
+          name: Set timezone to Asia/Tokyo
+          command: cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+      - checkout
+      - restore_cache:
+          name: Restore bundler cache
+          keys:
+            - gems-{{ .Environment.COMMON_CACHE_KEY }}-{{ checksum "Gemfile.lock" }}
+            - gems-{{ .Environment.COMMON_CACHE_KEY }}-
+      - run:
+          name: Setup requirements for continuous bundle update
+          command: gem install -N circleci-bundle-update-pr
+      - deploy:
+          name: Continuous bundle update
+          command: circleci-bundle-update-pr &lt;username&gt; &lt;email&gt;
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          # snip
+  nightly:
+    triggers:
+      - schedule:
+          cron: "00 10 * * 5"
+          filters:
+            branches:
+              only: master
+    jobs:
+      - continuous_bundle_update
+</code></pre>
+
+</section>
+<section>
+
+<h4>After</h4>
+<p><code>jobs</code> が完全に不要で <code>workflows</code> だけになった</p>
+
+<pre><code class="language-.circleci/config.yml">version: 2.1
+workflows:
+  version: 2
+  nightly:
+    triggers:
+      - schedule:
+          cron: "00 10 * * 5"
+          filters:
+            branches:
+              only: master
+    jobs:
+      - ruby-orbs/bundle-update-pr:
+          image: "circleci/ruby:2.5.3"
+          pre-bundle-update-pr:
+            - run:
+                name: "Set timezone to Asia/Tokyo"
+                command: "sudo cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime"
+            - ruby-orbs/bundle-install
+</code></pre>
+
+</section>
+<section>
+
+<h2>Orbsの仕組み</h2>
+<p>Orbsという外部のymlファイルを自分の<code>.circleci/config.yml</code>にincludeしてコンパイルして、インライン展開した新しい <code>.circleci/config,yml</code> を生成する</p>
+
+<pre><code class="language-yml">version: 2.1
+
+orbs:
+  # これがインライン展開される
+  hello: namespace/orb@dev:0.0.1
+
+workflows:
+  hello-workflow:
+    jobs:
+      - hello/hello-build
+</code></pre>
+
+</section>
+<section>
+
+<h3>CircleCIが <code>.circleci/config.yml</code>をコンパイル</h3>
+<p>これが実際にCircleCIのジョブとして実行される</p>
+
+<pre><code class="language-yml">version: 2
+jobs:
+  # namespace/orbに定義されているhello/hello-buildがインライン展開された
+  hello/hello-build:
+    docker:
+      - image: circleci/buildpack-deps:curl-browsers
+    steps:
+      - run:
+          command: echo "Hello, build!"
+workflows:
+  hello-workflow:
+    jobs:
+      - hello/hello-build
+  version: 2
+</code></pre>
+
+</section>
+<section>
+
+<h2>Orbsのテスト手法</h2>
+<p>c.f. <a href="https://github.com/CircleCI-Public/config-preview-sdk/blob/master/docs/orbs-testing.md">公式ドキュメント</a></p>
+
+<ol>
+  <li>Schema Validation
+    <ul>
+      <li>
+<code>config.yml</code> のシンタックスチェック</li>
+    </ul>
+  </li>
+  <li>Expansion Testing
+    <ul>
+      <li>
+<code>config.yml</code> をコンパイルしてOrbsをインライン化するテスト</li>
+    </ul>
+  </li>
+  <li>Runtime Testing
+    <ul>
+      <li>Orbsをpublishしないでコンテナ内でダミーのジョブを実行してテストを行う</li>
+    </ul>
+  </li>
+  <li>Integration Testing
+    <ul>
+      <li>Orbsを実際にpublishして、テスト用のリポジトリで実際にそのOrbsを読み込ませてテストを行う</li>
+    </ul>
+  </li>
+</ol>
+
+</section>
+<section>
+
+<h3>例）sue445/ruby-orbsのIntegration Testing</h3>
+<p><a href="images/integration_testing.png"><img src="images/integration_testing.png" alt="Integration Testing"></a></p>
+
+<p>c.f. <a href="https://sue445.hatenablog.com/entry/2018/11/16/125251">https://sue445.hatenablog.com/entry/2018/11/16/125251</a></p>
+
+</section>
+<section>
+
+<h2>Orbsを作る時の勘所 (1/2)</h2>
+<ul>
+  <li>シェルとCircleCIの機能を連携する部分がむいている
+    <ul>
+      <li>例）「 <code>restore_cache</code> -&gt; 言語ごとのインストール処理（Rubyなら <code>bundle install</code>） -&gt; <code>save_cache</code> 」をひとまとめにする</li>
+    </ul>
+  </li>
+  <li>複数のリポジトリで同じことを書いているならOrbs化チャンス</li>
+</ul>
+
+</section>
+<section>
+
+<h2>Orbsを作る時の勘所 (2/2)</h2>
+<ul>
+  <li>Orbsそのものはテストしづらいので、Orbs側は既存機能の呼び出しに専念するのがいい
+    <ul>
+      <li>前述の通り、Orbsを本気でテストしようとするとインテグレーションテスト用のリポジトリが必要になって大変</li>
+      <li>コアロジックはOrbsとは別で作った方がテストしやすいし、単体で使えるので汎用性が高くなる</li>
+    </ul>
+  </li>
+</ul>
+
+</section>
+<section>
+
+<h2>合わせて読みたい</h2>
+<ul>
+  <li>個人ブログにだいたい書いてます
+    <ul>
+      <li><a href="https://sue445.hatenablog.com/archive/category/CircleCI">https://sue445.hatenablog.com/archive/category/CircleCI</a></li>
+    </ul>
+  </li>
+</ul>
+
+</section>
+<section>
+
+<h2>まとめ</h2>
+<ul>
+  <li>Orbsを活用することでリポジトリをまたいだ <code>.circleci/config.yml</code> のリファクタリングと処理の共通化が可能になる</li>
+  <li>Orbsのテストは難しい</li>
 </ul>
 
 </section>
