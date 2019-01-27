@@ -14,10 +14,22 @@ https://sue445.github.io/circleci-user-community-event-01/
   * c.f. [CIマニアから見た各種CIツールの使い所 - くりにっき](https://sue445.hatenablog.com/entry/2018/12/07/114638)
 
 ---
-### 「このOrbの作者」です
+### 【宣伝1】「このOrbの作者」の人です
 https://codezine.jp/article/detail/11306?p=4
 
 ![orbs](images/orbs.png)
+
+---
+### 【宣伝2】最近 [Orbs registry](https://circleci.com/orbs/registry/) がPopular順でソートできるようになった
+![registry-1](images/registry-1.png)
+
+---
+### 3rd party製Orbsの中では上から3番目
+![registry-2](images/registry-2.png)
+
+---
+### CircleCIの社員を除けば実質1番 :muscle:
+![registry-3](images/registry-3.png)
 
 ---
 ## 今日話すこと
@@ -39,9 +51,16 @@ https://codezine.jp/article/detail/11306?p=4
 * WerckerやGitLab CIにも似たような仕組はある
 
 ---
+## CircleCIでアプリを作る時のあるある
+* どのプログラミング言語を使うにしろ、ある程度の規模のアプリを作る時にはなんらかのライブラリをだいたい使う
+  * 例）Rubyならgem, nodejsならnpm, Pythonならpip...
+* 毎回ライブラリをフルでインストールすると時間がかかるのでCIではキャッシュ効かせてなるべくビルドの時間を短くしたい
+  * CircleCIで実現しようとすると `restore_cache` -> 何らかのインストール処理 -> `save_cache` が定番
+
+---
 ## CircleCI + Rubyあるある
 * 「CircleCIのキャッシュを活かしつつ `bundle install` するstep」を書いている
-* Ruby以外でもこういうのはよくあることだと思う
+* Ruby以外でもこういうのはよく書くと思う
 
 ```.circleci/config.yml
 jobs:
@@ -80,7 +99,7 @@ jobs:
 
 ---
 ### つらみ
-* さっきのはrspecだけだけど、rspecとrubocopを並列実行したい時は同じようなのが必要
+* さっきのはrspec（テスト）だけだけど、rspecとrubocop（静的解析）を並列実行したい時は同じようなのが必要
   * Rubyでアプリを作っていると `bundle install` の利用頻度は多い
 * yamlのkeyで抽出してmergeすれば多少DRYにはなるが、リポジトリをまたがると無理なので同じのを何箇所も書く必要がある
 * CircleCIだけで個人アプリ10個もメンテしてると全部にコピペが大量発生
@@ -112,8 +131,21 @@ jobs:
 
 ---
 ### ruby-orbs/bundle-update-pr
-* https://github.com/masutaka/circleci-bundle-update-pr （CircleCIで自動bundle updateしてPRを作るgem）をorb化したもの
-* スニペット（gemを使うためのお膳立て）が結構長くてコピペして回るのがつらい量なので、可能な限り隠蔽したかった
+* https://github.com/masutaka/circleci-bundle-update-pr （CircleCIで自動 `bundle update` してPRを作るgem）をorb化したもの
+  * `bundle update` = 自分のアプリで使ってるライブラリを全部最新にすること
+
+
+---
+#### 動作風景
+* CircleCIのschedulerを利用して定期的に自動でライブラリを全部最新にするPRを作ってくれる
+* [Dependabot](https://dependabot.com/) がSaaSで同じ機能を提供してる。（Ruby以外の他言語も対応してる）
+
+![bundle-update-pr](images/bundle-update-pr.png)
+
+
+---
+#### Orb化するモチベーション
+* 便利なんだけど、スニペット（gemを使うための準備）が結構長くて複数のリポジトリにコピペして回るのがつらい量なので、可能な限り隠蔽したかった
 
 ---
 #### Before

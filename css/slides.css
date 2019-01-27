@@ -19,7 +19,8 @@
   border: none;
 }
 
-.reveal section h2 img {
+.reveal section h2 img,
+.reveal section h3 img {
   height: 1.5em !important;
   vertical-align: bottom !important;
 }

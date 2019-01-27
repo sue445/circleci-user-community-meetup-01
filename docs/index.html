@@ -87,10 +87,29 @@
 </section>
 <section>
 
-<h3>「このOrbの作者」です</h3>
+<h3>【宣伝1】「このOrbの作者」の人です</h3>
 <p><a href="https://codezine.jp/article/detail/11306?p=4">https://codezine.jp/article/detail/11306?p=4</a></p>
 
 <p><img src="images/orbs.png" alt="orbs"></p>
+
+</section>
+<section>
+
+<h3>【宣伝2】最近 <a href="https://circleci.com/orbs/registry/">Orbs registry</a> がPopular順でソートできるようになった</h3>
+<p><img src="images/registry-1.png" alt="registry-1"></p>
+
+</section>
+<section>
+
+<h3>3rd party製Orbsの中では上から3番目</h3>
+<p><img src="images/registry-2.png" alt="registry-2"></p>
+
+</section>
+<section>
+
+<h3>CircleCIの社員を除けば実質1番 <img class="emoji" alt=":muscle:" src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f4aa.png">
+</h3>
+<p><img src="images/registry-3.png" alt="registry-3"></p>
 
 </section>
 <section>
@@ -130,10 +149,27 @@
 </section>
 <section>
 
+<h2>CircleCIでアプリを作る時のあるある</h2>
+<ul>
+  <li>どのプログラミング言語を使うにしろ、ある程度の規模のアプリを作る時にはなんらかのライブラリをだいたい使う
+    <ul>
+      <li>例）Rubyならgem, nodejsならnpm, Pythonならpip…</li>
+    </ul>
+  </li>
+  <li>毎回ライブラリをフルでインストールすると時間がかかるのでCIではキャッシュ効かせてなるべくビルドの時間を短くしたい
+    <ul>
+      <li>CircleCIで実現しようとすると <code>restore_cache</code> -&gt; 何らかのインストール処理 -&gt; <code>save_cache</code> が定番</li>
+    </ul>
+  </li>
+</ul>
+
+</section>
+<section>
+
 <h2>CircleCI + Rubyあるある</h2>
 <ul>
   <li>「CircleCIのキャッシュを活かしつつ <code>bundle install</code> するstep」を書いている</li>
-  <li>Ruby以外でもこういうのはよくあることだと思う</li>
+  <li>Ruby以外でもこういうのはよく書くと思う</li>
 </ul>
 
 <pre><code class="language-.circleci/config.yml">jobs:
@@ -175,7 +211,7 @@
 
 <h3>つらみ</h3>
 <ul>
-  <li>さっきのはrspecだけだけど、rspecとrubocopを並列実行したい時は同じようなのが必要
+  <li>さっきのはrspec（テスト）だけだけど、rspecとrubocop（静的解析）を並列実行したい時は同じようなのが必要
     <ul>
       <li>Rubyでアプリを作っていると <code>bundle install</code> の利用頻度は多い</li>
     </ul>
@@ -224,8 +260,32 @@
 
 <h3>ruby-orbs/bundle-update-pr</h3>
 <ul>
-  <li><a href="https://github.com/masutaka/circleci-bundle-update-pr">https://github.com/masutaka/circleci-bundle-update-pr</a> （CircleCIで自動bundle updateしてPRを作るgem）をorb化したもの</li>
-  <li>スニペット（gemを使うためのお膳立て）が結構長くてコピペして回るのがつらい量なので、可能な限り隠蔽したかった</li>
+  <li><a href="https://github.com/masutaka/circleci-bundle-update-pr">https://github.com/masutaka/circleci-bundle-update-pr</a> （CircleCIで自動 <code>bundle update</code> してPRを作るgem）をorb化したもの
+    <ul>
+      <li>
+<code>bundle update</code> = 自分のアプリで使ってるライブラリを全部最新にすること</li>
+    </ul>
+  </li>
+</ul>
+
+</section>
+<section>
+
+<h4>動作風景</h4>
+<ul>
+  <li>CircleCIのschedulerを利用して定期的に自動でライブラリを全部最新にするPRを作ってくれる</li>
+  <li>
+<a href="https://dependabot.com/">Dependabot</a> がSaaSで同じ機能を提供してる。（Ruby以外の他言語も対応してる）</li>
+</ul>
+
+<p><img src="images/bundle-update-pr.png" alt="bundle-update-pr"></p>
+
+</section>
+<section>
+
+<h4>Orb化するモチベーション</h4>
+<ul>
+  <li>便利なんだけど、スニペット（gemを使うための準備）が結構長くて複数のリポジトリにコピペして回るのがつらい量なので、可能な限り隠蔽したかった</li>
 </ul>
 
 </section>
