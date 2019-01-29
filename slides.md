@@ -307,6 +307,8 @@ c.f. https://sue445.hatenablog.com/entry/2018/11/16/125251
 
 ---
 ## おまけ：CircleCIに対する要望
+
+---
 ### [Registry] 特定のorgやuserが作ったorbの一覧が見れるページがほしい
 * circleci公式のorb一覧や自分が作ったorbの一覧をまとめて見たい
 * 例）https://hub.docker.com/u/sue445/ , https://rubygems.org/profiles/sue445
