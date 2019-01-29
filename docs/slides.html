@@ -437,3 +437,89 @@ workflows:
 </ul>
 
 </section>
+<section>
+
+<h2>おまけ：CircleCIに対する要望</h2>
+<h3>[Registry] 特定のorgやuserが作ったorbの一覧が見れるページがほしい</h3>
+<ul>
+  <li>circleci公式のorb一覧や自分が作ったorbの一覧をまとめて見たい</li>
+  <li>例）<a href="https://hub.docker.com/u/sue445/">https://hub.docker.com/u/sue445/</a> , <a href="https://rubygems.org/profiles/sue445">https://rubygems.org/profiles/sue445</a></li>
+</ul>
+
+</section>
+<section>
+
+<h3>[Registry] ソースコード（GitHubなど）へのリンクを貼る場所</h3>
+<ul>
+  <li>PRの送り先が分かりやすいと便利</li>
+  <li>registoryには書けない詳細な使い方をGitHubに書く用途</li>
+</ul>
+
+</section>
+<section>
+
+<h3>[Registry] どれだけ使われてるか客観的に分かる数字</h3>
+<ul>
+  <li>DockerHubで例えるとStarやPull数のようなもの</li>
+  <li>3rd party製のorbを探す時の選定材料としてあると便利</li>
+  <li>Popular順でソートはできるのだが、何を基準にソートしてるのか分からないので合わせて表示してほしい</li>
+</ul>
+
+</section>
+<section>
+
+<h3>[Testing] orbのテスト周りの手法がまとまってない</h3>
+<ul>
+  <li>現状だと <a href="https://github.com/CircleCI-Public/orb-tools-orb">https://github.com/CircleCI-Public/orb-tools-orb</a> のソースを読み解いて使い方を見つけるしかない</li>
+  <li><a href="https://github.com/CircleCI-Public/config-preview-sdk/blob/master/docs/orbs-testing.md">https://github.com/CircleCI-Public/config-preview-sdk/blob/master/docs/orbs-testing.md</a> をサンプルコードまで落とし込んだレベルが理想</li>
+</ul>
+
+</section>
+<section>
+
+<h3>[Syntax] Conditional stepで簡単な演算子も書きたい</h3>
+<p>例</p>
+
+<pre><code class="language-yml">- when:
+  - condition: &lt;&lt; parameters.count == 3 &gt;&gt;
+  - steps:
+    - 〜
+</code></pre>
+
+<pre><code class="language-yml">- when:
+  - condition: &lt;&lt; parameters.value == 'hoge' &gt;&gt;
+  - steps:
+    - 〜
+</code></pre>
+
+</section>
+<section>
+
+<h3>[Syntax] negation operator (<code>!</code>) がほしい</h3>
+<p>boolean型のparameterが <code>false</code> の時に実行されるブロックを書きたいができない</p>
+
+<pre><code class="language-yml">- run: |
+    # こっちは書ける
+    &lt;&lt;# parameters.with_gemfile_lock &gt;&gt;
+    with_gemfile_lock="true"
+    &lt;&lt;/ parameters.with_gemfile_lock &gt;&gt;
+
+    # こっちはエラー
+    &lt;&lt;# !parameters.with_gemfile_lock &gt;&gt;
+    with_gemfile_lock="false"
+    &lt;&lt;/ !parameters.with_gemfile_lock &gt;&gt;
+</code></pre>
+
+</section>
+<section>
+
+<h4>Workaround (but dirty hack…)</h4>
+
+<pre><code class="language-yml">- run: |
+    with_gemfile_lock="false"
+    &lt;&lt;# parameters.with_gemfile_lock &gt;&gt;
+    with_gemfile_lock="true"
+    &lt;&lt;/ parameters.with_gemfile_lock &gt;&gt;
+</code></pre>
+
+</section>
