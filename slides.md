@@ -304,3 +304,72 @@ c.f. https://sue445.hatenablog.com/entry/2018/11/16/125251
 ## まとめ
 * Orbsを活用することでリポジトリをまたいだ `.circleci/config.yml` のリファクタリングと処理の共通化が可能になる
 * Orbsのテストは難しい
+
+---
+## おまけ：CircleCIに対する要望
+### [Registry] 特定のorgやuserが作ったorbの一覧が見れるページがほしい
+* circleci公式のorb一覧や自分が作ったorbの一覧をまとめて見たい
+* 例）https://hub.docker.com/u/sue445/ , https://rubygems.org/profiles/sue445
+
+---
+### [Registry] ソースコード（GitHubなど）へのリンクを貼る場所
+* PRの送り先が分かりやすいと便利
+* registoryには書けない詳細な使い方をGitHubに書く用途
+
+---
+### [Registry] どれだけ使われてるか客観的に分かる数字
+* DockerHubで例えるとStarやPull数のようなもの
+* 3rd party製のorbを探す時の選定材料としてあると便利
+* Popular順でソートはできるのだが、何を基準にソートしてるのか分からないので合わせて表示してほしい
+
+---
+### [Testing] orbのテスト周りの手法がまとまってない
+* 現状だと https://github.com/CircleCI-Public/orb-tools-orb のソースを読み解いて使い方を見つけるしかない
+* https://github.com/CircleCI-Public/config-preview-sdk/blob/master/docs/orbs-testing.md をサンプルコードまで落とし込んだレベルが理想
+
+---
+### [Syntax] Conditional stepで簡単な演算子も書きたい
+例
+
+```yml
+- when:
+  - condition: << parameters.count == 3 >>
+  - steps:
+    - 〜
+```
+
+
+```yml
+- when:
+  - condition: << parameters.value == 'hoge' >>
+  - steps:
+    - 〜
+```
+
+---
+### [Syntax] negation operator (`!`) がほしい
+boolean型のparameterが `false` の時に実行されるブロックを書きたいができない
+
+```yml
+- run: |
+    # こっちは書ける
+    <<# parameters.with_gemfile_lock >>
+    with_gemfile_lock="true"
+    <</ parameters.with_gemfile_lock >>
+
+    # こっちはエラー
+    <<# !parameters.with_gemfile_lock >>
+    with_gemfile_lock="false"
+    <</ !parameters.with_gemfile_lock >>
+```
+
+---
+#### Workaround (but dirty hack...)
+
+```yml
+- run: |
+    with_gemfile_lock="false"
+    <<# parameters.with_gemfile_lock >>
+    with_gemfile_lock="true"
+    <</ parameters.with_gemfile_lock >>
+```
