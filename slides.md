@@ -1,9 +1,9 @@
 # Orbsベストプラクティス
 sue445
 
-2019/01/30 [第1回CircleCI ユーザーコミュニティイベント](https://circleci.connpass.com/event/115193/)
+2019/01/30 [第1回CircleCI ユーザーコミュニティミートアップ](https://circleci.connpass.com/event/115193/)
 
-https://sue445.github.io/circleci-user-community-event-01/
+https://sue445.github.io/circleci-user-community-meetup-01/
 
 ---
 ## 自己紹介 [![sue445](images/sue445.png)](https://twitter.com/sue445)
